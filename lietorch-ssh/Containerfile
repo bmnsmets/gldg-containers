@@ -1,0 +1,49 @@
+FROM docker.io/library/ubuntu:24.04
+
+WORKDIR /root
+ENV DEBIAN_FRONTEND=noninteractive
+
+
+# Install necessary system packages
+RUN apt-get update \
+&& apt-get install -y wget bzip2 openssh-server tmux git software-properties-common glab \
+&& add-apt-repository ppa:deadsnakes/ppa \
+&& apt-get update \
+&& apt-get install -y python3.13-full \
+&& apt-get clean \
+&& rm -rf /var/lib/apt/lists/* \
+&& rm -R /etc/update-motd.d
+
+# GitHub CLI
+RUN mkdir -p -m 755 /etc/apt/keyrings \
+&& out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+&& cat $out | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+&& chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+&& apt update \
+&& apt install gh -y
+
+# Configure the OpenSSH daemon
+RUN mkdir /var/run/sshd && echo 'root:gldg' | chpasswd
+# SSH login fix
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+COPY ./include/etc-ssh/. /etc/ssh/
+EXPOSE 22
+
+# oh-my-bash and .bashrc
+RUN bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+COPY ./include/.bashrc ./.bashrc
+
+# Python environment
+RUN python3.13 -m venv /root/env \
+&& . /root/env/bin/activate \
+&& pip install --no-cache-dir --upgrade $(pip list | awk '{print $1}' | sed '1,2d') \
+&& pip install --no-cache-dir torch~=2.6 torchvision~=0.21 torchaudio~=2.6 --index-url https://download.pytorch.org/whl/cu126 \
+&& pip install --no-cache-dir lietorch \
+&& pip install --no-cache-dir matplotlib pytest ipython jupyterlab ipywidgets plotly
+
+
+WORKDIR /workspace
+
+# run
+CMD ["/usr/sbin/sshd", "-D"]
