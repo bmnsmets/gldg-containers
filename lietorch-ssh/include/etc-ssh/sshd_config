@@ -84,8 +84,8 @@ KbdInteractiveAuthentication no
 # and KbdInteractiveAuthentication to 'no'.
 UsePAM yes
 
-#AllowAgentForwarding yes
-#AllowTcpForwarding yes
+AllowAgentForwarding yes
+AllowTcpForwarding yes
 #GatewayPorts no
 X11Forwarding yes
 #X11DisplayOffset 10
@@ -96,8 +96,8 @@ PrintMotd no
 #TCPKeepAlive yes
 #PermitUserEnvironment no
 #Compression delayed
-#ClientAliveInterval 0
-#ClientAliveCountMax 3
+ClientAliveInterval 300
+ClientAliveCountMax 3
 #UseDNS no
 #PidFile /run/sshd.pid
 #MaxStartups 10:30:100

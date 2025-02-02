@@ -1,18 +1,23 @@
 FROM docker.io/library/ubuntu:24.04
 
+LABEL org.opencontainers.image.source=https://https://github.com/bmnsmets/gldg-containers
+LABEL org.opencontainers.image.description="Ubuntu-based LieTorch image with SSH for remote development"
+LABEL org.opencontainers.image.licenses=MIT
+
 WORKDIR /root
 ENV DEBIAN_FRONTEND=noninteractive
 
 
 # Install necessary system packages
 RUN apt-get update \
-&& apt-get install -y wget bzip2 openssh-server tmux git software-properties-common glab \
+&& apt-get install -y wget bzip2 openssh-server tmux git git-lfs software-properties-common glab \
 && add-apt-repository ppa:deadsnakes/ppa \
 && apt-get update \
 && apt-get install -y python3.13-full \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/* \
-&& rm -R /etc/update-motd.d
+&& rm -R /etc/update-motd.d \
+&& git lfs install
 
 # GitHub CLI
 RUN mkdir -p -m 755 /etc/apt/keyrings \
