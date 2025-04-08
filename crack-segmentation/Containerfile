@@ -1,0 +1,38 @@
+FROM docker.io/library/ubuntu:24.04
+
+LABEL org.opencontainers.image.source=https://https://github.com/bmnsmets/gldg-containers
+LABEL org.opencontainers.image.description="Image for training crack segmentation models."
+LABEL org.opencontainers.image.licenses=MIT
+
+WORKDIR /root
+ENV DEBIAN_FRONTEND=noninteractive
+
+
+# Install necessary system packages
+RUN apt-get update \
+&& apt-get install -y wget bzip2 tmux git git-lfs software-properties-common glab \
+&& add-apt-repository ppa:deadsnakes/ppa \
+&& apt-get update \
+&& apt-get install -y python3.13-full \
+&& apt-get clean \
+&& rm -rf /var/lib/apt/lists/* \
+&& rm -R /etc/update-motd.d \
+&& git lfs install
+
+# oh-my-bash and .bashrc
+# RUN bash -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+COPY ./include/.bashrc ./.bashrc
+
+# Python environment
+RUN python3.13 -m venv /root/env \
+&& . /root/env/bin/activate \
+&& pip install --no-cache-dir --upgrade $(pip list | awk '{print $1}' | sed '1,2d') \
+&& pip install --no-cache-dir torch~=2.6 torchvision~=0.21 torchaudio~=2.6 --index-url https://download.pytorch.org/whl/cu126 \
+&& pip install --no-cache-dir lietorch \
+&& pip install --no-cache-dir matplotlib pytest
+
+
+WORKDIR /workspace
+
+# run
+CMD["python", "entrypoint.py"]
